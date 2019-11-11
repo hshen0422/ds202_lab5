@@ -1,0 +1,64 @@
+---
+title: "Team"
+author: "Hanying Shen, Sijie Huang"
+date: "11/10/2019"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(readr)
+```
+
+```{r}
+#1
+data=read.table('diabetes.txt',header=TRUE)
+```
+
+```{r}
+#2
+data <-replace(data, data =="", NA)
+data<-droplevels(data)
+```
+
+```{r}
+#3
+diabetes_reduced<-subset(data, select = -c(id,bp.2s,bp.2d) )
+```
+
+```{r}
+#4
+diabetes_clean<-na.omit(diabetes_reduced)
+index.na=apply(is.na(diabetes_reduced), 1, any) 
+index.na
+```
+
+```{r}
+#5
+which(is.na(diabetes_clean))
+```
+
+```{r}
+#6
+qplot(x=diabetes_clean$glyhb,data=diabetes_clean)
+summary(diabetes_clean$glyhb)
+summary(log(log(diabetes_clean$glyhb)))
+```
+
+```{r}
+#7
+diabetes_clean$glyhb_star<-log(log(diabetes_clean$glyhb))
+qplot(x=glyhb_star,data=diabetes_clean)
+```
+
+```{r}
+#8
+diabetes_clean %>% group_by(frame) %>% summarise(mean.glyhb = mean(glyhb_star))
+```
+
+
+
+
+
