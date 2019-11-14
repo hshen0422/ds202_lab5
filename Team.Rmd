@@ -1,64 +1,173 @@
 ---
-title: "Team"
-author: "Hanying Shen, Sijie Huang"
-date: "11/10/2019"
+title: "Ds202_lab5"
+author: "Sijie Huang,Hanying Shen"
+date: "November 14, 2019"
 output: html_document
 ---
 
-```{r}
+```{R}
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(readr)
 ```
 
-```{r}
-#1
-data=read.table('diabetes.txt',header=TRUE)
-```
+## Processing the data
 
-```{r}
+```{R}
+#1
+data=read.table('C:/Users/Jessie Hwang/Desktop/ds 202/diabetes.txt',header=TRUE)
 #2
 data <-replace(data, data =="", NA)
 data<-droplevels(data)
-```
-
-```{r}
 #3
 diabetes_reduced<-subset(data, select = -c(id,bp.2s,bp.2d) )
-```
-
-```{r}
 #4
 diabetes_clean<-na.omit(diabetes_reduced)
 index.na=apply(is.na(diabetes_reduced), 1, any) 
 index.na
-```
-
-```{r}
 #5
-which(is.na(diabetes_clean))
+table(index.na)
+#use table to see the numbers of false
 ```
 
-```{r}
+
+## Exploring and transforming data
+
+```{R}
 #6
-qplot(x=diabetes_clean$glyhb,data=diabetes_clean)
+ggplot(data=diabetes_clean, aes(x=diabetes_clean$glyhb)) + geom_histogram(bins = 30) + labs(title="Count of Glycosolated Hemoglobin",x="Glycosolated Hemoglobin",y="Count")
 summary(diabetes_clean$glyhb)
-summary(log(log(diabetes_clean$glyhb)))
+summary(log(diabetes_clean$glyhb))
 ```
 
-```{r}
+We can do transformation on glyhb,there are some common transformations includs squaring one of the variables, ???Finding the reciprocal of one of the variable and the log or natural log of one of the variables.
+Linear-log tends to fix non-linearity and right skew in explanatory variables.???Log-log tends to fix non-linearity, right skew in explanatory and response variables, and non-constant variance.
+
+```{R}
 #7
-diabetes_clean$glyhb_star<-log(log(diabetes_clean$glyhb))
-qplot(x=glyhb_star,data=diabetes_clean)
+ggplot(data=diabetes_clean, aes(x=log(glyhb))) + geom_histogram(bins = 30) + labs(title="Count of Transformation of Glycosolated Hemoglobin",x="Transformation of Glycosolated Hemoglobin",y="Count")
+ggplot(data=diabetes_clean, aes(x=log(log(glyhb)))) + geom_histogram(bins = 30) + labs(title="Count of Transformation of Glycosolated Hemoglobin",x="Transformation of Glycosolated Hemoglobin",y="Count")
 ```
 
-```{r}
+From the linear-log plot, we can see the skewness slightly shifts and remedies, so we decided to use log-log, and from thhe plot of log-log, we can remedy the original highly right skewed plot the best among above methods.
+
+```{R}
+diabetes_clean$glyhb_star<-log(log(diabetes_clean$glyhb))
+ggplot(data=diabetes_clean, aes(x=glyhb_star)) + geom_histogram(bins = 30) + labs(title="Count of Transformation of Glycosolated Hemoglobin",x="Transformation of Glycosolated Hemoglobin",y="Count")
 #8
 diabetes_clean %>% group_by(frame) %>% summarise(mean.glyhb = mean(glyhb_star))
+diabetes_clean %>% group_by(chol) %>% summarise(mean.glyhb = mean(glyhb_star))
+diabetes_clean %>% group_by(location,gender) %>% summarise(mean.glyhb = mean(glyhb_star))
+```
+
+from the summary statistic, we can see when the frame size is larger, the mean of Glycosolated Hemoglobin is higer.
+People in buckingham has hinger Glycosolated Hemoglobin in general and female has higher Glycosolated Hemoglobin in both buckingham and louisa.
+
+
+
+## Visualizations
+
+```{R}
+#10
+dia<-diabetes_clean %>% group_by(frame,location) %>% summarise (mean.glyhb_star= mean(glyhb_star))
+ggplot(data=dia,aes(x=frame,y=mean.glyhb_star,color=location))+geom_point()+ labs(title="relationship between Glycosolated Hemoglobin and frame size group by location",x="frame ",y="Glycosolated Hemoglobin")
+
+#11
+ggplot(diabetes_clean,aes(y=ratio,x=glyhb_star,alpha=0.5)) + geom_point()+geom_smooth(method='lm')+ labs(title="relationship between Glycosolated Hemoglobin and ratio",x="ratio ",y="Glycosolated Hemoglobin")
+cor(diabetes_clean$ratio,diabetes_clean$glyhb_star)
+ggplot(diabetes_clean,aes(y=bp.1s,x=glyhb_star,alpha=0.5)) + geom_point()+geom_smooth(method='lm')+ labs(title="relationship between Glycosolated Hemoglobin and First Systolic Blood Pressure ",x="First Systolic Blood Pressure  ",y="Glycosolated Hemoglobin")
+cor(diabetes_clean$bp.1s,diabetes_clean$glyhb_star)
+ggplot(diabetes_clean,aes(y=age,x=glyhb_star,alpha=0.5)) + geom_point()+geom_smooth(method='lm')+ labs(title="relationship between Glycosolated Hemoglobin and age",x="age ",y="Glycosolated Hemoglobin")
+cor(diabetes_clean$age,diabetes_clean$glyhb_star)
+ggplot(diabetes_clean,aes(y=gender,x=glyhb_star,alpha=0.5)) + geom_point()+coord_flip()+ labs(title="relationship between Glycosolated Hemoglobin and gender",x="gender ",y="Glycosolated Hemoglobin")
+ggplot(diabetes_clean,aes(y=hip,x=glyhb_star,alpha=0.5)) + geom_point()+geom_smooth(method='lm')+ labs(title="relationship between Glycosolated Hemoglobin and hip",x="hip ",y="Glycosolated Hemoglobin")
+ggplot(diabetes_clean,aes(y=weight,x=glyhb_star,alpha=0.5)) + geom_point()+geom_smooth(method='lm')+ labs(title="relationship between Glycosolated Hemoglobin and weight",x="weight ",y="Glycosolated Hemoglobin")
+cor(diabetes_clean$weight,diabetes_clean$glyhb_star)
 ```
 
 
+There is a weak relationship betwwen ratio, bp.1s, age, hip and weight and Glycosolated Hemoglobin
+we can see the male has higer Glycosolated Hemoglobin range but they looks very similar. There's no too much relationship between gender and Glycosolated Hemoglobin.
+
+```{R}
+#12
+#use jitter
+ggplot(diabetes_clean,aes(y=hip,x=waist,alpha=0.5)) + geom_jitter() + facet_wrap(~frame)+labs(title="relationship between hip and waist group by frame",x="waist",y="hip") 
+#grouping by variables
+ggplot(diabetes_clean,aes(y=hip,x=waist,color=frame,alpha=0.5)) + geom_point()+labs(title="relationship between hip and waist group by frame",x="waist",y="hip") 
+```
+
+## Messy data
+
+13.
+`gather` will take multiple columns and collapse them into key-value pairs, duplicating all other columns as needed. The `spread` function spreads a key-value pair across multiple columns.
+`gather` function reshapes â widee data longer, and `spread` function reshapes â longer data wider.
+
+14.
+The functions spread() and gather() are not perfectly symmetrical because column type information is lost. When we use gather() on a data frame, it discards the original column types.
+
+
+## Regression models
+
+```{R}
+#15
+fit = lm(glyhb_star ~stab.glu + age + waist + ratio+ factor(frame),data=diabetes_clean)
+summary(fit)
+plot(fit)
+```
+
+The F-test of overall significance indicates whether the linear regression model provides a better fit to the data than a model that contains no independent variables. 
+
+Therefore, the F-statistic is 68.13 on 6 and 359 DF, and p-value: < 2.2e-16, we can compare the p-value for the F-test to your significance level. In this case, there is overwhelming evidence There is overwhelming evidence that overall, the Stabilized Glucose, age, waist, Cholesterol/HDL Ratio, and factor(frame) are significant in predicting Transformed of Glycosolated Hemoglobin
+
+Interpret adjusted R-squared: 52.46% of the variability in Transformation of Glycosolated Hemoglobin can be explained using a linear model including Stabilized Glucose, age, waist, Cholesterol/HDL Ratio, and factor(frame) after adjusting for the complexity of the model.
+
+Do the results from our exploratory analysis suggest a linear model is the right approach here? You may reference plots and summary statistics from previous steps.
+
+Yes, the results from our exploratory analysis suggest a linear model is the right approach. Because the p-value proves linear model is a good fit here. The dataset is continuous with multiple paramters, so linear model is better than classifier in this case.
+
+16.
+
+Interpret the estimated regression coefficient for each predictor in fit, regardless of whether or not the predictor is significant.
+
+Interpret the intercept: If the Stabilized Glucose,Cholesterol/HDL Ratio,age,waist and the frame are all equal to 0, the regression equation predict the Glycosolated Hemoglobin is 0.0242521. 
+
+Interpret the coefficient: Holding Cholesterol/HDL Ratio,age,waist and the frame as constant, if the Stabilized Glucose differed by one unit, the Glycosolated Hemoglobin will differ by 0.002 unit on average.
+
+Holding Stabilized Glucose,age,waist and the frame as constant, if the Cholesterol/HDL Ratio differed by one unit, the Glycosolated Hemoglobin will differ by 0.0121 unit on average.
+
+Holding Stabilized Glucose,Cholesterol/HDL Ratio,waist and the frame as constant, if the age differed by one unit, the Glycosolated Hemoglobin will differ by 0.002 unit on average.
+
+Holding Stabilized Glucose,Cholesterol/HDL Ratio,age and the frame as constant, if the waist differed by one unit, the Glycosolated Hemoglobin will differ by 0.0032 unit on average.
+
+Holding Stabilized Glucose,Cholesterol/HDL Ratio,age and waist as constant, if the frame is medium, the Glycosolated Hemoglobin will differ by 0.0131 unit on average.
+
+Holding Stabilized Glucose,Cholesterol/HDL Ratio,age and waist as constant, if the frame is small, the Glycosolated Hemoglobin will differ by 0.0014 unit on average.
+
+```{R}
+#17
+fit$fitted.values
+#These estimated fitted values are estimates the true value of the predictor,Glycosolated Hemoglobin. 
+y=0.0242521+0.0017931*90+0.0020688*35+0.0031850*30+0.0120746*5.1+0.0014579
+y
+```
+
+
+18.
+Inference: Given a set of data you want to infer how the output is generated as a function of the data. 
+Prediction: Given a new measurement, you want to use an existing data set to build a model that reliably chooses the correct identifier from a set of outcomes.
+
+
+19.
+linear regression is a parametric model which can assume a form or probability distribution to the data. 
+It's eaiser to interpret and the heoretical analysis is morestraightforward,but assumptions we made about our data actually can either be true or not.
+KNN is a non-parameter model,models do not assume a shape for the data.We may assume other properties (such as smoothness,independence). 
+The data speak for itself and Very flexible but it needs more observations. Theoretical analysis canbe very challenging. Computational issues.
 
 
 
+
+## Reflection
+
+20.Our views of data science slightly changed since we leanrned more ways to analyze the data over the time.After discussing, my partner and I drew a conclusion that the most surprising about data science is that we need to try to do many unnessary plots to find to most useful ones to interpret. and the most challenging: how to find useful ways to do data visualization, and the most enjoyable: after finishing the data and we can see the cleaned data and be able to interpret it.
